@@ -1,0 +1,12 @@
+{
+  "name": "storit-tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "start": "nodemon server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
