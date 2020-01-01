@@ -24,18 +24,43 @@ admin.initializeApp({
 });
 
 
+//middle ware to authenticate firebase token in the header
+const getAuthToken = (req,res,next) =>{
+	if (req.headers.authorization 
+			&& req.headers.authorization.split (' ')[0] === 'Bearer') {
+
+		req.authtoken = req.headers.authorization.split(' ')[1];
+	} else {
+		req.authtoken = null;
+	}
+	next();
+};
+
+const checkIfAuthenticated = (req,res,next) =>{
+	getAuthToken(req,res, async()=> {
+		try{
+			const {authToken} =req;
+			const userInfo = await admin.auth().verifyIdToken(authToken);
+			req.authId = userInfo.uid;
+			return next();
+		}catch (error){
+			return res.status(401).send ({error: 'Access Denied'});
+		}
+	});
+};
+
 //verfies idToken that comes from the client app
-admin.auth().verifyIdToken(idToken)
-  .then(function(decodedToken) {
-    let uid = decodedToken.uid;
+// admin.auth().verifyIdToken(idToken)
+//   .then(function(decodedToken) {
+//     let uid = decodedToken.uid;
 
-    console.log('Successfully Authenticated');
+//     console.log('Successfully Authenticated');
 
-  }).catch(function(error) {
+//   }).catch(function(error) {
   	 
-  	 res.send(error)
-     console.log('Access Denied' + error);
-  });
+//   	 res.send(error)
+//      console.log('Access Denied' + error);
+//   });
 
 
 //create connection
