@@ -86,7 +86,7 @@ con.connect (function(error){
 				console.log('Created Database');
 		});
 		//create table in the database
-		var sql = 'Create table IF NOT EXISTS MyDataBase.ListOfSevers(id int AUTO_INCREMENT, uid VARCHAR(50), ServerID VARCHAR(50),storageSize int ,PRIMARY KEY (id))';
+		var sql = 'Create table IF NOT EXISTS MyDataBase.ListOfSevers(id int AUTO_INCREMENT, uid VARCHAR(50), ServerID VARCHAR(50),storageSize int ,PRIMARY KEY (ServerID))';
 		con.query(sql, (err,result) => {
 			if (err) {
 			console.log(err);
