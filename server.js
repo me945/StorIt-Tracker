@@ -5,6 +5,8 @@ const mysql = require('mysql');
 const admin = require('firebase-admin');
 const serviceAccount = require("C:\\Users\\E.T\\AndroidStudioProjects\\StorIt-Tracker\\storit-28df0-firebase-adminsdk-do5d6-99c5a01a86.json");
 const request = require('request');
+const socketIo = require('socket.io')
+const password = require('./Password');
 
 
 //Server configuration
@@ -15,6 +17,7 @@ var app = express ();
 app.listen(PORT, () => {
 	console.log('Server running at: http://localhost:'+ PORT);
 });
+
 
 
 //Initialize The Admin-SDK (configuration)
@@ -35,19 +38,21 @@ const getAuthToken = (req,res,next) =>{
 	}
 	next();
 };
-
+//checking the information
 const checkIfAuthenticated = (req,res,next) =>{
 	getAuthToken(req,res, async()=> {
 		try{
 			const {authToken} =req;
 			const userInfo = await admin.auth().verifyIdToken(authToken);
 			req.authId = userInfo.uid;
+			console.log('')
 			return next();
 		}catch (error){
 			return res.status(401).send ({error: 'Access Denied'});
 		}
 	});
 };
+
 
 //verfies idToken that comes from the client app
 // admin.auth().verifyIdToken(idToken)
@@ -66,8 +71,8 @@ const checkIfAuthenticated = (req,res,next) =>{
 //create connection
 var con = mysql.createConnection({
 	host : 'localhost',
-	user :  'root',
-	password : 'MyNewPass',
+	user :  password.user,
+	password : password.DBpassword,
 	database : '',
 
 }); 
@@ -78,7 +83,7 @@ con.connect (function(error){
 	   console.log('error:'+ error);
 	} else {
 		//if it connectes it creates a database
-		var sql = 'create database 	ip_addresses';
+		var sql = 'create database IF NOT EXISTS ip_addresses';
 		con.query(sql, (err,result) => {
 			if (err) {
 				console.log(err);
@@ -87,7 +92,7 @@ con.connect (function(error){
 				console.log('Created Database');
 		});
 		//create table in the database
-		var sql = 'Create table ip_addresses.PostTable(id int AUTO_INCREMENT, serverName VARCHAR(50), ip_address VARCHAR(50) ,PRIMARY KEY (id))';
+		var sql = 'Create table IF NOT EXISTS ip_addresses.PostTable(id int AUTO_INCREMENT, serverName VARCHAR(50), ip_address VARCHAR(50) ,PRIMARY KEY (id))';
 		con.query(sql, (err,result) => {
 			if (err) {
 			console.log(err);
@@ -100,16 +105,18 @@ con.connect (function(error){
 			database : 'ip_addresses'
 		}); 
 	} 
-	console.log('Connected to MySQL'); 
+	console.log('Connected to MySQL');
 });
 
 
 
 //Insert data into the database
-app.post('/saveData', (req, res) => {
+app.post('/saveData', checkIfAuthenticated, (req, res) => {
 	console.log("I got a request");
 	console.log(req.body);
-	let post = {serverName:'req.headers.serverName ', ip_address: 'req.headers.ip_address'};
+	//Authenticate the users' token
+
+	let post = {serverName:'req.body.clientUid ', ip_address: 'req.body.sdp'};
 	let sql = `INSERT INTO PostTable SET ?`;
 	let query = con.query(sql,[post], (err, result) =>{
 		if (err) {
@@ -118,12 +125,13 @@ app.post('/saveData', (req, res) => {
 			console.log(result);
 			res.send('Server added to the database');
 	});
-	connection.end();
 }); 
 
-//Return Ip address of a server
+//Send the Sdp to the server and ip address to the client
 app.get('/getpost/:id', (req, res) => {
 	console.log("I got a request");
+	//Authenticate the users' token
+
 	let sql = `SELECT ip_address FROM PostTable WHERE id = ${req.params.id}`;
 	let query = con.query(sql, (err, result) =>{
 		if (err) {
@@ -136,7 +144,7 @@ app.get('/getpost/:id', (req, res) => {
 }); 
 
 
-//-----------------Testing Functions-------------------
+//------------------------Testing Functions------------------------
 
 
 //Show Database
