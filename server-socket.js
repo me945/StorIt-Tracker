@@ -3,7 +3,7 @@ const path = require('path');
 const mysql = require('mysql');
 const eventEmitter = require('events');
 var admin = require('firebase-admin');
-const serviceAccount = require("C:\\Users\\E.T\\AndroidStudioProjects\\StorIt-Tracker\\storit-28df0-firebase-adminsdk-do5d6-88bed76789.json");
+const serviceAccount = require("C:\\Users\\E.T\\AndroidStudioProjects\\StorIt-Tracker\\storit-28df0-firebase-adminsdk-do5d6-b70edb80ff.json");
 const request = require('request');
 const password = require('./Password');
 var app = express (); 
@@ -85,8 +85,19 @@ con.connect (function(error){
 				console.log(result);
 				console.log('Created Database');
 		});
-		//create table in the database
-		var sql = 'Create table IF NOT EXISTS MyDataBase.ListOfSevers(id int AUTO_INCREMENT, uid VARCHAR(50), ServerID VARCHAR(50),storageSize int ,PRIMARY KEY (ServerID))';
+
+        //create Server table in the database
+ 		var sql = 'Create table IF NOT EXISTS MyDataBase.Server(ServerID int AUTO_INCREMENT, uid VARCHAR(50),storageAmount int ,socketId int ,PRIMARY KEY (ServerID))';
+ 		con.query(sql, (err,result) => {
+ 			if (err) {
+ 			console.log(err);
+ 			}
+ 			console.log(result);
+ 			console.log('Created ListOfSevers');
+ 		});
+
+		//create Chunk table in the database
+		var sql = 'Create table IF NOT EXISTS MyDataBase.Chunk(ChunkID int AUTO_INCREMENT, uid VARCHAR(50),ServerID VARCHAR(50), chunkSize int ,PRIMARY KEY (ChunkID),FOREIGN KEY (ServerID) REFERENCES Server(ServerID))';
 		con.query(sql, (err,result) => {
 			if (err) {
 			console.log(err);
@@ -94,6 +105,17 @@ con.connect (function(error){
 			console.log(result);
 			console.log('Created ListOfSevers');
 		});
+
+		//create File table in the database
+        var sql = 'Create table IF NOT EXISTS MyDataBase.File(FileID int AUTO_INCREMENT, uid VARCHAR(50), fileSize int ,PRIMARY KEY (FileID))';
+        con.query(sql, (err,result) => {
+        	if (err) {
+        	console.log(err);
+        	}
+        	console.log(result);
+        	console.log('Created ListOfSevers');
+        	});
+
 		//switch connection to the database
 		con.changeUser ({
 			database : 'MyDataBase'
@@ -120,7 +142,9 @@ io.on('connection', function(client){
     });
 
 	 client.on('upload', function(details){
-	 	let sql = `SELECT ServerID FROM ListOfSevers WHERE storageSize => ${details.filesize}`;
+
+
+	 	let sql = `SELECT ServerID FROM Server WHERE storageAmount => ${details.filesize}`;
 		let query = con.query(sql, (err, result) =>{
 		if (err) {
 			console.log(err);
@@ -128,6 +152,24 @@ io.on('connection', function(client){
 			socket.emit(result);
 			console.log(result);
 		});
+
+         var post  = {serverID:'Secondserver', chunkSize: '41'};
+         let sql = "INSERT INTO Chunk SET ?";
+         let query = con.query(sql,[post], (err, result) => {
+             if (err) {
+                	console.log(err);
+                }
+                	console.log(result);
+             });
+
+		 var post  = {uid:'', fileSize: '13'};
+         let sql = "INSERT INTO File SET ?";
+         let query = con.query(sql,[post], (err, result) => {
+        	 if (err) {
+        		 console.log(err);
+        	 }
+        		 console.log(result);
+         });
 	 })
 
 	 client.on('download', function(details){
@@ -163,6 +205,8 @@ io.on('connection', function(client){
 			console.log('user disconnected from the server');
 	});
 });
+
+
 
 app.get('/show', (req, res) => {
 	let sql = 'show databases';
