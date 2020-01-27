@@ -7,8 +7,9 @@ const serviceAccount = require("C:\\Users\\hk2\\Desktop\\Tracker\\StorIt-Tracker
 const request = require('request');
 const password = require('./Password');
 var app = express (); 
-const PORT = 8080;
-const http = require('http');
+const PORT = 443;
+const http = require('https');
+const fs = require('fs');
 const socketIO = require('socket.io');
 
 //create instance access to the server
@@ -18,6 +19,14 @@ const publicPath = path.join(__dirname,'/../StorIt-Tracker');
 var socketHandler = ('./socketHandler');
 
 // app.use(express.static(publicPath));
+
+var sslPath = '/etc/letsencrypt/live/www.vrpacman.com/';
+var options = {
+	key: fs.readFileSync(sslPath + 'privkey.pem'),
+	cert: fs.readFileSync(sslPath + 'fullchain.pem')
+}
+
+
 
 //Create app listener 
 var serverListener = server.listen(PORT, () => {
