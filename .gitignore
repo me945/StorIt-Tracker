@@ -1,5 +1,5 @@
 node_modules/
 .idea/
 Password.js
-*.json
+package-lock.json
 placementAlgo.js
